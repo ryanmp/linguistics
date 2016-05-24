@@ -1,5 +1,4 @@
-import re, random
-
+import re, random, itertools, operator
 
 '''
 usage: 			"txt1 = ling.Txt('onthewaydown.txt', d)" where d is a ling.Dict()
@@ -45,6 +44,22 @@ class Txt():
 			ret += line_as_str + '\n'
 		ret += '---------------------------'
 		return ret
+
+	def GetAlliterations(self):
+		first_phones = []
+		for l in self.txt:
+			for w in l:
+				if len(w.phone) > 0:
+					first_phones.append((w.word, w.phone[0]))
+		alliterations = []
+		groupings = [list(j) for i, j in itertools.groupby(first_phones, operator.itemgetter(1))]
+		for group in groupings:
+			if len(group) > 1:
+				alliterations.append(group)
+		alliterations.sort(key = len)
+		alliterations.reverse()
+		return alliterations
+
 
 
 	'''
@@ -158,7 +173,16 @@ class Word():
 			else: 
 				return random.sample(self.syns, 1)
 		else:
-			return '' 
+			return ''
+
+	def GetRhyme(self):
+		rhyme_part = []
+		for i in reversed(self.phone):
+			rhyme_part.append(i)
+			if bool(re.compile('\d').search(i)): #contains_digits
+				break
+		return rhyme_part[::-1]
+
 
 class Dict():
 
@@ -196,4 +220,14 @@ class Dict():
 				self.d[word] = Word(word)
 			self.d[word].syns = content
 		f.close()
+
+	def GetRhymes(self, word):
+		test = self.d[word].GetRhyme()
+		rhyming_words = []
+		for k, v in self.d.iteritems():
+			r = v.GetRhyme()
+			if r == test:
+				rhyming_words.append(k)
+		return rhyming_words
+
 
